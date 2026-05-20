@@ -10,6 +10,7 @@ use App\Models\Event;
 use App\Models\SubEvent;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\PhotoReportController;
 
 Route::get('/', [PublicViewerController::class, 'index'])->name('public.viewer');
 
@@ -109,6 +110,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/general', [ReportController::class, 'generateGeneral'])->name('reports.generate.general');
     Route::get('/reports/specific', [ReportController::class, 'generateSpecific'])->name('reports.generate.specific');
+        // ESTO DEBE ESTAR AQUÍ ADENTRO DEL GRUPO 'auth'
+    Route::get('/photo-reports', [App\Http\Controllers\PhotoReportController::class, 'index'])->name('photo-reports.index');
+    Route::get('/photo-reports/create', [App\Http\Controllers\PhotoReportController::class, 'create'])->name('photo-reports.create');
+    Route::post('/photo-reports', [App\Http\Controllers\PhotoReportController::class, 'store'])->name('photo-reports.store');
+
 });
 
 require __DIR__.'/auth.php';

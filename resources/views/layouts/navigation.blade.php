@@ -78,6 +78,37 @@
                 <i class="fa-solid fa-chart-column text-lg {{ request()->routeIs('reports.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                 <span>{{ __('Reportes') }}</span>
             </a>
+            <a href="{{ route('reports.index') }}" ...>
+            </a>
+
+        <div class="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-2 mt-6">Galería e Impacto</div>
+
+        <a href="{{ route('photo-reports.create', ['type' => 'evento']) }} " 
+            class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
+            <div class="flex items-center gap-3">
+        <i class="fa-solid fa-calendar-star text-lg group-hover:text-red-400 transition-colors"></i>
+                <span>Eventos Especiales</span>
+            </div>
+            <span class="bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-md border border-red-500/30">Fotos</span>
+            </a>
+
+        <a href="{{ route('photo-reports.create', ['type' => 'difusion']) }}" 
+            class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
+            <div class="flex items-center gap-3">
+            <i class="fa-solid fa-radio text-lg group-hover:text-red-400 transition-colors"></i>
+            <span>Actividades de Difusión</span>
+        </div>
+            <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-md border border-blue-500/30">Medios</span>
+        </a>
+        <div class="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-2 mt-6">Galería e Impacto</div>
+
+<a href="{{ route('photo-reports.index') }}" 
+   class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group mb-2 {{ request()->routeIs('photo-reports.index') ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-500/50' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
+    <i class="fa-solid fa-images text-lg {{ request()->routeIs('photo-reports.index') ? '' : 'group-hover:text-red-400 transition-colors' }}"></i>
+    <span>Ver Galería General</span>
+</a>
+
+
         </div>
 
         <div class="p-4 border-t border-slate-800 bg-slate-950/30 shrink-0">
