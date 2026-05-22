@@ -256,7 +256,7 @@
             </div>
         </div>
         <div class="flex gap-1.5 flex-wrap">
-            <a href="https://www.facebook.com/GobiernoRegionalPuno" target="_blank" class="social-badge badge-fb"><i class="fa-brands fa-facebook text-sm"></i> Facebook</a>
+            <a href="https://www.facebook.com/DRTPEPunoOFICIAL/?locale=es_LA" target="_blank" class="social-badge badge-fb"><i class="fa-brands fa-facebook text-sm"></i> Facebook</a>
             <a href="#" target="_blank" class="social-badge badge-tt"><i class="fa-brands fa-tiktok text-sm"></i> TikTok</a>
         </div>
     </div>
@@ -545,7 +545,10 @@
                 <div class="lg:col-span-4">
                     <div class="flex items-center gap-2 mb-4"><i class="fa-brands fa-facebook text-blue-600 text-lg"></i><h4 class="text-xs font-black text-slate-600 uppercase tracking-wider">Facebook</h4></div>
                     <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-slate-200" style="height:480px;">
-                        <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FGobiernoRegionalPuno&tabs=timeline&width=340&height=480&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" width="100%" height="480" style="border:none;overflow:hidden;" scrolling="no" frameborder="0" allowfullscreen allow="autoplay; clipboard-write; encrypted-media"></iframe>
+                        <iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2FDRTPEPunoOFICIAL&tabs=timeline&width=340&height=480&small_header=true&adapt_container_width=true&hide_cover=false&show_facepile=true&appId"
+                                width="100%" height="480"
+                                style="border:none;overflow:hidden;" scrolling="no" frameborder="0"
+                                allowfullscreen allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                     </div>
                 </div>
 
