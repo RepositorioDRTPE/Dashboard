@@ -11,6 +11,11 @@ use App\Models\SubEvent;
 use App\Http\Controllers\TrashController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PhotoReportController;
+use App\Http\Controllers\BulletinController;
+use App\Http\Controllers\AnnouncementController;
+
+
+
 
 Route::get('/', [PublicViewerController::class, 'index'])->name('public.viewer');
 
@@ -114,6 +119,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/photo-reports', [App\Http\Controllers\PhotoReportController::class, 'index'])->name('photo-reports.index');
     Route::get('/photo-reports/create', [App\Http\Controllers\PhotoReportController::class, 'create'])->name('photo-reports.create');
     Route::post('/photo-reports', [App\Http\Controllers\PhotoReportController::class, 'store'])->name('photo-reports.store');
+
+
+    Route::resource('bulletins', BulletinController::class);
+    Route::resource('announcements', AnnouncementController::class);
+
 
 });
 

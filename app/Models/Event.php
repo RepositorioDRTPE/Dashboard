@@ -9,7 +9,7 @@ class Event extends Model
 {
     use SoftDeletes; 
 
-    protected $fillable = ['category_id', 'event_code', 'title', 'goal_people', 'unit_measure','description']; 
+    protected $fillable = ['category_id', 'event_code', 'title', 'goal_people', 'unit_measure','description','funding_source']; 
 
     public function category() { 
         return $this->belongsTo(Category::class); 

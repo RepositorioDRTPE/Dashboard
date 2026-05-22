@@ -1,10 +1,10 @@
 <nav x-data="{ openSidebar: false }" class="relative z-50">
-    
+   
     <div class="sm:hidden flex items-center justify-between bg-white border-b border-slate-200 px-4 py-3 shadow-sm sticky top-0 z-40">
         <button @click="openSidebar = true" class="text-slate-500 hover:text-indigo-600 focus:outline-none transition-colors p-2 -ml-2">
             <i class="fa-solid fa-bars text-xl"></i>
         </button>
-        
+       
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 w-auto">
             <span class="font-black text-slate-800 text-sm tracking-widest">DTPE</span>
@@ -15,21 +15,21 @@
         </div>
     </div>
 
-    <div x-show="openSidebar" 
+    <div x-show="openSidebar"
          x-transition:enter="transition-opacity ease-linear duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
          x-transition:leave="transition-opacity ease-linear duration-300"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 sm:hidden" 
-         @click="openSidebar = false" 
+         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 sm:hidden"
+         @click="openSidebar = false"
          style="display: none;">
     </div>
 
-    <aside :class="openSidebar ? 'translate-x-0' : '-translate-x-full'" 
+    <aside :class="openSidebar ? 'translate-x-0' : '-translate-x-full'"
            class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 flex flex-col transition-transform duration-300 ease-in-out sm:translate-x-0 shadow-2xl border-r border-slate-800 h-screen">
-        
+       
         <div class="h-20 flex items-center justify-between px-6 bg-slate-950/50 border-b border-slate-800 shrink-0">
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group w-full bg-white p-2 rounded-xl shadow-lg border border-slate-200 transition-transform hover:scale-105">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 w-auto object-contain">
@@ -44,70 +44,81 @@
         </div>
 
         <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1.5 scrollbar-thin scrollbar-thumb-slate-700">
-            
+           
             <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-2">Principal</div>
 
-            <a href="{{ route('dashboard') }}" 
+            <a href="{{ route('dashboard') }}"
                class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('dashboard') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-chart-pie text-lg {{ request()->routeIs('dashboard') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
-                <span>{{ __('Dashboard') }}</span>
+                <span>{{ __('Página Principal') }}</span>
             </a>
 
             <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Operaciones</div>
 
-            <a href="{{ route('categories.index') }}" 
+            <a href="{{ route('categories.index') }}"
                class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('categories.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-layer-group text-lg {{ request()->routeIs('categories.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                 <span>{{ __('Actividades (PP)') }}</span>
             </a>
 
-            <a href="{{ route('events.index') }}" 
+            <a href="{{ route('events.index') }}"
                class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('events.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-briefcase text-lg {{ request()->routeIs('events.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                 <span>{{ __('Act. Operativas (A01)') }}</span>
             </a>
 
-            <a href="{{ route('subevents.index') }}" 
+            <a href="{{ route('subevents.index') }}"
                class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('subevents.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-file-signature text-lg {{ request()->routeIs('subevents.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                 <span>{{ __('Reportes') }}</span>
             </a>
 
-            <a href="{{ route('reports.index') }}" 
+            <a href="{{ route('reports.index') }}"
                class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('reports.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-chart-column text-lg {{ request()->routeIs('reports.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
-                <span>{{ __('Reportes') }}</span>
-            </a>
-            <a href="{{ route('reports.index') }}" ...>
+                <span>Analisis Gráfico</span>
             </a>
 
-        <div class="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-2 mt-6">Galería e Impacto</div>
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Galería e Impacto</div>
 
-        <a href="{{ route('photo-reports.create', ['type' => 'evento']) }} " 
-            class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
-            <div class="flex items-center gap-3">
-        <i class="fa-solid fa-calendar-star text-lg group-hover:text-red-400 transition-colors"></i>
-                <span>Eventos Especiales</span>
-            </div>
-            <span class="bg-red-500/20 text-red-400 text-[10px] px-2 py-0.5 rounded-md border border-red-500/30">Fotos</span>
+            <a href="{{ route('photo-reports.index') }}"
+               class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group mb-2 {{ request()->routeIs('photo-reports.index') ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-500/50' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
+                <i class="fa-solid fa-images text-lg {{ request()->routeIs('photo-reports.index') ? '' : 'group-hover:text-red-400 transition-colors' }}"></i>
+                <span>Ver Galería General</span>
             </a>
 
-        <a href="{{ route('photo-reports.create', ['type' => 'difusion']) }}" 
-            class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
-            <div class="flex items-center gap-3">
-            <i class="fa-solid fa-radio text-lg group-hover:text-red-400 transition-colors"></i>
-            <span>Actividades de Difusión</span>
-        </div>
-            <span class="bg-blue-500/20 text-blue-400 text-[10px] px-2 py-0.5 rounded-md border border-blue-500/30">Medios</span>
-        </a>
-        <div class="text-[10px] font-black text-white/40 uppercase tracking-widest mb-3 ml-2 mt-6">Galería e Impacto</div>
+            <a href="{{ route('photo-reports.create', ['type' => 'evento']) }}"
+               class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-star text-lg group-hover:text-red-400 transition-colors"></i>
+                    <span>Registrar Evento</span>
+                </div>
+            </a>
 
-<a href="{{ route('photo-reports.index') }}" 
-   class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group mb-2 {{ request()->routeIs('photo-reports.index') ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-500/50' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
-    <i class="fa-solid fa-images text-lg {{ request()->routeIs('photo-reports.index') ? '' : 'group-hover:text-red-400 transition-colors' }}"></i>
-    <span>Ver Galería General</span>
+            <a href="{{ route('photo-reports.create', ['type' => 'difusion']) }}"
+               class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-radio text-lg group-hover:text-red-400 transition-colors"></i>
+                    <span>Registrar Difusión</span>
+                </div>
+            </a>
+
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Publicaciones Oficiales</div>
+
+            <a href="{{ route('bulletins.index') }}"
+               class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group {{ request()->routeIs('bulletins.*') ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
+                <i class="fa-solid fa-file-pdf text-lg {{ request()->routeIs('bulletins.*') ? '' : 'group-hover:text-amber-400 transition-colors' }}"></i>
+                <span>Boletines Informativos</span>
+            </a>
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Publicaciones Oficiales</div>
+
+<a href="{{ route('bulletins.index') }}" ...> </a>
+
+<a href="{{ route('announcements.index') }}"
+   class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group {{ request()->routeIs('announcements.*') ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
+    <i class="fa-solid fa-bullhorn text-lg {{ request()->routeIs('announcements.*') ? '' : 'group-hover:text-amber-400 transition-colors' }}"></i>
+    <span>Comunicados Oficiales</span>
 </a>
-
 
         </div>
 
@@ -136,4 +147,6 @@
         </div>
     </aside>
 </nav>
+
+
 

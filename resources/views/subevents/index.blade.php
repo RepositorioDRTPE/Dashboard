@@ -1,169 +1,183 @@
 <x-app-layout>
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ __('Mis Reportes de Avance') }}
-            </h2>
-            <div class="flex gap-2">
-                <a href="{{ route('subevents.trashed') }}" class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-sm font-medium rounded-md transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
+            <div class="flex items-center gap-3">
+                <div class="p-2.5 bg-gradient-to-br from-slate-800 to-slate-950 rounded-xl text-white shadow-md">
+                    <i class="fa-solid fa-folder-open text-lg"></i>
+                </div>
+                <div>
+                    <h2 class="font-black text-2xl text-slate-800 leading-tight tracking-tight">
+                        {{ __('Mis Reportes de Avance') }}
+                    </h2>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Historial de Evidencias Documentadas (A01)</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+                <a href="{{ route('subevents.trashed') }}" class="group bg-white hover:bg-red-50 text-slate-600 hover:text-red-600 border border-slate-200 hover:border-red-200 font-bold py-2.5 px-4 rounded-xl flex items-center gap-2 transition-all text-xs shadow-sm">
+                    <i class="fa-solid fa-trash-can text-slate-400 group-hover:text-red-500 transition-colors"></i>
                     Papelera
                 </a>
-                <a href="{{ route('subevents.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
+                <a href="{{ route('subevents.create') }}" class="bg-slate-900 hover:bg-indigo-600 text-white font-black text-xs uppercase tracking-wider py-3 px-5 rounded-xl transition-all shadow-md hover:shadow-lg hover:-translate-y-0.5 flex items-center gap-2 shrink-0">
+                    <i class="fa-solid fa-circle-plus"></i>
                     Nuevo Reporte
                 </a>
             </div>
         </div>
     </x-slot>
 
-    <div class="py-12" x-data="{ showDeleteModal: false, selectedSubEventId: null, selectedSubEventName: '' }" @toggle-delete-modal.window="showDeleteModal = !showDeleteModal; if ($event.detail) { selectedSubEventId = $event.detail.id; selectedSubEventName = $event.detail.name; }">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
-            {{-- Mensaje de éxito con fade out progresivo --}}
+    <div class="py-8" x-data="{ showDeleteModal: false, selectedSubEventId: null, selectedSubEventName: '' }" @toggle-delete-modal.window="showDeleteModal = !showDeleteModal; if ($event.detail) { selectedSubEventId = $event.detail.id; selectedSubEventName = $event.detail.name; }">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+           
+            {{-- MENSAJES DE ÉXITO ESTILIZADOS --}}
             @if(session('success'))
-                <div x-data="{ show: true, fade: false }"
+                <div x-data="{ show: true }"
                      x-show="show"
-                     x-transition:leave="transition-opacity ease-out duration-1000"
-                     x-init="setTimeout(() => { fade = true; setTimeout(() => show = false, 1000); }, 4000)"
-                     class="mb-4 bg-green-50 border-l-4 border-green-400 p-4 rounded shadow-sm"
-                     :class="{ 'opacity-0': fade }"
-                     style="transition: opacity 1s ease-out;">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <svg class="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                            </svg>
-                        </div>
-                        <div class="ml-3">
-                            <p class="text-sm text-green-700">{{ session('success') }}</p>
-                        </div>
-                    </div>
+                     x-init="setTimeout(() => show = false, 4000)"
+                     x-transition:leave="transition ease-in duration-500 opacity-0"
+                     class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-4 rounded-xl shadow-sm flex items-center gap-3">
+                    <i class="fa-solid fa-circle-check text-emerald-500 text-lg"></i>
+                    <p class="font-bold text-sm">{{ session('success') }}</p>
                 </div>
             @endif
 
+            {{-- FILTRO AVANZADO DE FUENTES DE FINANCIAMIENTO (TABS SEGMENTADOS) --}}
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
+                <div class="flex items-center gap-2 text-slate-700">
+                    <i class="fa-solid fa-filter text-xs text-slate-400"></i>
+                    <span class="text-xs font-black uppercase tracking-wider">Filtrar por Origen de Fondos:</span>
+                </div>
+                
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
+                    <button onclick="filterByFunding('all', this)" class="funding-filter-btn px-4 py-2 rounded-lg text-xs font-black uppercase tracking-wider transition-all bg-white text-slate-900 shadow-sm">
+                        Todos
+                    </button>
+                    <button onclick="filterByFunding('gobierno_regional', this)" class="funding-filter-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase tracking-wider transition-all hover:text-slate-800">
+                        <i class="fa-solid fa-building-government mr-1 text-indigo-500"></i> Regional
+                    </button>
+                    <button onclick="filterByFunding('gobierno_central', this)" class="funding-filter-btn px-4 py-2 rounded-lg text-xs font-bold text-slate-500 uppercase tracking-wider transition-all hover:text-slate-800">
+                        <i class="fa-solid fa-building-shield mr-1 text-amber-500"></i> SUNAFIL / Central
+                    </button>
+                </div>
+            </div>
+
+            {{-- CONTROL DE ESTADO VACÍO --}}
             @if($subEvents->isEmpty())
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-12 text-center">
-                        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay reportes</h3>
-                        <p class="mt-1 text-sm text-gray-500">Comienza registrando un nuevo reporte de avance.</p>
-                        <div class="mt-6">
-                            <a href="{{ route('subevents.create') }}" class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md">
-                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Nuevo Reporte
-                            </a>
-                        </div>
+                <div class="bg-white rounded-2xl border border-slate-100 p-16 text-center shadow-sm">
+                    <div class="w-16 h-16 bg-slate-50 border border-slate-100 shadow-inner rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                        <i class="fa-regular fa-folder-open text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-800">No se encontraron reportes operativos</h3>
+                    <p class="text-sm text-slate-400 font-medium max-w-sm mx-auto mt-1">Comience registrando una nueva evidencia física de avance vinculada al POI.</p>
+                    <div class="mt-6">
+                        <a href="{{ route('subevents.create') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 text-white rounded-xl text-xs font-black uppercase tracking-wider hover:bg-indigo-600 transition-colors shadow">
+                            <i class="fa-solid fa-plus"></i> Registrar Primer Avance
+                        </a>
                     </div>
                 </div>
             @else
-                <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                    <div class="p-6">
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200" id="reportes-table">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition select-none" data-sort="fecha">
-                                            <div class="flex items-center gap-1">
-                                                Fecha
-                                                <span class="sort-indicator text-indigo-500 opacity-0 transition" id="fecha-indicator">↓</span>
-                                            </div>
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition select-none" data-sort="actividad">
-                                            <div class="flex items-center gap-1">
-                                                Actividad / Título
-                                                <span class="sort-indicator text-indigo-500 opacity-0 transition" id="actividad-indicator"></span>
-                                            </div>
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition select-none" data-sort="avance">
-                                            <div class="flex items-center gap-1">
-                                                Avance
-                                                <span class="sort-indicator text-indigo-500 opacity-0 transition" id="avance-indicator"></span>
-                                            </div>
-                                        </th>
-                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Evidencia</th>
-                                        <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200" id="table-body">
-                                    {{-- Se llena dinámicamente con JS --}}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        @if(method_exists($subEvents, 'links'))
-                            <div class="mt-6">
-                                {{ $subEvents->links() }}
-                            </div>
-                        @endif
+                {{-- ESTRUCTURA MATRIZ DE LA TABLA PREMIUM --}}
+                <div class="bg-white rounded-2xl border border-slate-100 shadow-md overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left divide-y divide-slate-100" id="reportes-table">
+                            <thead class="bg-slate-50 text-slate-500 text-[10px] font-black uppercase tracking-wider">
+                                <tr>
+                                    <th scope="col" class="px-6 py-4 cursor-pointer hover:bg-slate-100/80 transition select-none w-36" data-sort="fecha">
+                                        <div class="flex items-center gap-1.5">
+                                            Fecha de Meta
+                                            <span class="text-indigo-600 transition-opacity" id="fecha-indicator">↓</span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 cursor-pointer hover:bg-slate-100/80 transition select-none" data-sort="actividad">
+                                        <div class="flex items-center gap-1.5">
+                                            ActividadPOI / Título Descriptivo
+                                            <span class="text-indigo-600 transition-opacity" id="actividad-indicator"></span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 cursor-pointer hover:bg-slate-100/80 transition select-none w-64" data-sort="avance">
+                                        <div class="flex items-center gap-1.5">
+                                            Métrica de Cobertura Capped
+                                            <span class="text-indigo-600 transition-opacity" id="avance-indicator"></span>
+                                        </div>
+                                    </th>
+                                    <th scope="col" class="px-6 py-4 w-32">Evidencia</th>
+                                    <th scope="col" class="px-6 py-4 text-center w-36">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100" id="table-body">
+                                {{-- Inyección de Nodos Dinámicos controlada por JavaScript --}}
+                            </tbody>
+                        </table>
                     </div>
+
+                    @if(method_exists($subEvents, 'links'))
+                        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
+                            {{ $subEvents->links() }}
+                        </div>
+                    @endif
                 </div>
             @endif
         </div>
 
-        {{-- Modal de confirmación para eliminar --}}
-        <div x-show="showDeleteModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-center justify-center min-h-screen p-4">
-                <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" @click="showDeleteModal = false"></div>
+        {{-- CONFIRMACIÓN DE ELIMINACIÓN MODAL ALTA ESTÉTICA --}}
+        <div x-show="showDeleteModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-slate-950/40 backdrop-blur-sm" role="dialog" aria-modal="true">
+            <div class="bg-white rounded-3xl overflow-hidden shadow-2xl border border-slate-100 max-w-md w-full p-6 sm:p-8 space-y-6" @click.away="showDeleteModal = false" x-transition>
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shrink-0 shadow-sm">
+                        <i class="fa-solid fa-triangle-exclamation text-lg animate-bounce"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <h3 class="text-lg font-black text-slate-900">¿Mover reporte a la papelera?</h3>
+                        <p class="text-xs text-slate-500 font-medium leading-relaxed" x-text="'Se archivará el registro «' + selectedSubEventName + '». Podrá ser restaurado desde la papelera corporativa.'"></p>
+                    </div>
+                </div>
 
-                <div x-show="showDeleteModal" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100" x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" class="inline-block align-bottom bg-white rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                        <div class="sm:flex sm:items-start">
-                            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
-                                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                </svg>
-                            </div>
-                            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                                <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-title">¿Estás seguro de mover este reporte a la papelera?</h3>
-                                <div class="mt-2">
-                                    <p class="text-sm text-gray-500" x-text="'Estás a punto de mover «' + selectedSubEventName + '» a la papelera. Podrás restaurarlo después.'"></p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                        <form method="POST" :action="'{{ url('subevents') }}/' + selectedSubEventId">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:ml-3 sm:w-auto sm:text-sm transition">
-                                Mover a papelera
-                            </button>
-                        </form>
-                        <button @click="showDeleteModal = false" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition">
-                            Cancelar
+                <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                    <button @click="showDeleteModal = false" type="button" class="px-4 py-2.5 rounded-xl text-slate-500 hover:text-slate-800 font-bold text-xs uppercase tracking-wider transition-colors">
+                        Cancelar
+                    </button>
+                    <form method="POST" :action="'{{ url('subevents') }}/' + selectedSubEventId">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-black text-xs uppercase tracking-wider py-2.5 px-5 rounded-xl transition-all shadow-md">
+                            Confirmar Archivo
                         </button>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
+    {{-- LÓGICA DE CONTROL AVANZADA (Filtro Cruzado de Financiamiento y Puntuaciones Capped) --}}
     <script>
-        // Datos originales desde Blade
         const reportesData = @json($subEvents);
-        
-        // Estado de ordenación
+       
+        // Estados analíticos de orden y filtrado
         let currentSort = 'fecha';
-        let sortDirection = 'asc';
-        let avanceDirection = 'desc';
+        let sortDirection = 'desc'; 
+        let currentFundingFilter = 'all'; // 'all', 'gobierno_regional', 'gobierno_central'
 
         const tbody = document.getElementById('table-body');
-        const fechaHeader = document.querySelector('[data-sort="fecha"]');
-        const actividadHeader = document.querySelector('[data-sort="actividad"]');
-        const avanceHeader = document.querySelector('[data-sort="avance"]');
-        const fechaIndicator = document.getElementById('fecha-indicator');
-        const actividadIndicator = document.getElementById('actividad-indicator');
-        const avanceIndicator = document.getElementById('avance-indicator');
+        const indicators = {
+            fecha: document.getElementById('fecha-indicator'),
+            actividad: document.getElementById('actividad-indicator'),
+            avance: document.getElementById('avance-indicator')
+        };
 
+        // FILTRADO DINÁMICO DE PESTAÑAS (Origen de Fondos)
+        function filterByFunding(filterType, buttonEl) {
+            currentFundingFilter = filterType;
+            
+            // Re-estilizar botones de control de pestañas
+            document.querySelectorAll('.funding-filter-btn').forEach(btn => {
+                btn.classList.remove('bg-white', 'text-slate-900', 'shadow-sm', 'font-black');
+                btn.classList.add('text-slate-500', 'font-bold');
+            });
+            buttonEl.classList.remove('text-slate-500', 'font-bold');
+            buttonEl.classList.add('bg-white', 'text-slate-900', 'shadow-sm', 'font-black');
+            
+            renderTable();
+        }
+
+        // CONTROL MATEMÁTICO INTEGRADO (Evita desvíos acumulativos por excedentes)
         function groupAndCalculateProgress(reports) {
             const grouped = {};
             reports.forEach(r => {
@@ -177,35 +191,43 @@
                 }
                 grouped[eid].reports.push(r);
             });
-            
+           
+            // Ordenamiento por fechas antes del cálculo progresivo
             for (const eid in grouped) {
-                const group = grouped[eid];
-                if (group.reports && Array.isArray(group.reports)) {
-                    group.reports.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
-                }
+                grouped[eid].reports.sort((a, b) => new Date(a.event_date) - new Date(b.event_date));
             }
-            
+           
             const acumMap = {};
             for (const eid in grouped) {
                 const data = grouped[eid];
                 const reportsArray = data.reports || [];
-                let running = 0;
+                let runningSum = 0; // Sumador acumulativo en la línea de tiempo
+
                 reportsArray.forEach(r => {
-                    running += r.attendees_count || 0;
-                    const meta = data.goal || 0;
-                    const porcentaje = meta > 0 ? Math.min(100, Math.round((running / meta) * 100 * 10) / 10) : 0;
+                    const actualAttendees = r.attendees_count || 0;
+                    runningSum += actualAttendees;
+                    const meta = data.goal || 1;
+
+                    // RECTIFICACIÓN CLAVE: El avance de la barra base se topa rigurosamente al 100%
+                    const maxVal = Math.max(meta, runningSum);
+                    const w_base = runningSum >= meta ? (meta / maxVal * 100) : (runningSum / meta * 100);
+                    const w_exceso = runningSum > meta ? ((runningSum - meta) / maxVal * 100) : 0;
+                    const porcentajeNetoCapped = Math.min(100, Math.round((runningSum / meta) * 100));
+
                     acumMap[r.id] = {
-                        acumulado: running,
+                        acumulado: runningSum,
                         meta: meta,
-                        porcentaje: porcentaje
+                        w_base: w_base,
+                        w_exceso: w_exceso,
+                        porcentaje: porcentajeNetoCapped,
+                        isSuperado: runningSum > meta,
+                        excedenteIndividual: Math.max(0, runningSum - meta)
                     };
                 });
             }
-            
             return { grouped, acumMap };
         }
 
-        // Función para abrir el modal de eliminación (llamada desde los botones generados)
         window.confirmDelete = function(id, title) {
             window.dispatchEvent(new CustomEvent('toggle-delete-modal', {
                 detail: { id: id, name: title }
@@ -213,200 +235,143 @@
         };
 
         function renderTable() {
-            let sortedReports = [...reportesData];
+            if(!tbody) return;
+            
+            // 1. Clonamos y aplicamos el filtro por fuente de financiamiento
+            let filteredReports = [...reportesData];
+            if (currentFundingFilter !== 'all') {
+                filteredReports = filteredReports.filter(r => r.event?.funding_source === currentFundingFilter);
+            }
 
+            // 2. Ordenamiento Matriz
             if (currentSort === 'fecha') {
-                sortedReports.sort((a, b) => {
-                    return sortDirection === 'asc' 
-                        ? new Date(a.event_date) - new Date(b.event_date)
-                        : new Date(b.event_date) - new Date(a.event_date);
-                });
+                filteredReports.sort((a, b) => sortDirection === 'asc' ? new Date(a.event_date) - new Date(b.event_date) : new Date(b.event_date) - new Date(a.event_date));
             } else if (currentSort === 'actividad') {
-                sortedReports.sort((a, b) => {
+                filteredReports.sort((a, b) => {
                     const codeA = a.event?.event_code || '';
                     const codeB = b.event?.event_code || '';
-                    if (codeA === codeB) {
-                        return sortDirection === 'asc'
-                            ? new Date(a.event_date) - new Date(b.event_date)
-                            : new Date(b.event_date) - new Date(a.event_date);
-                    }
-                    return sortDirection === 'asc'
-                        ? codeA.localeCompare(codeB)
-                        : codeB.localeCompare(codeA);
+                    return sortDirection === 'asc' ? codeA.localeCompare(codeB) : codeB.localeCompare(codeA);
                 });
             } else if (currentSort === 'avance') {
-                const { grouped } = groupAndCalculateProgress(sortedReports);
-                const progressMap = {};
-                for (const [eventId, data] of Object.entries(grouped)) {
-                    const reportsArray = data.reports || [];
-                    if (reportsArray.length > 0) {
-                        let running = 0;
-                        reportsArray.forEach(r => running += r.attendees_count || 0);
-                        const goal = data.goal || 0;
-                        const percentage = goal > 0 ? (running / goal) * 100 : 0;
-                        progressMap[eventId] = percentage;
-                    }
-                }
-                sortedReports.sort((a, b) => {
-                    const progA = progressMap[a.event_id] || 0;
-                    const progB = progressMap[b.event_id] || 0;
-                    if (progA !== progB) {
-                        return avanceDirection === 'desc' ? progB - progA : progA - progB;
-                    }
-                    return new Date(a.event_date) - new Date(b.event_date);
+                const { acumMap } = groupAndCalculateProgress(filteredReports);
+                filteredReports.sort((a, b) => {
+                    const pctA = acumMap[a.id]?.porcentaje || 0;
+                    const pctB = acumMap[b.id]?.porcentaje || 0;
+                    return sortDirection === 'asc' ? pctA - pctB : pctB - pctA;
                 });
             }
 
-            const { acumMap } = groupAndCalculateProgress(sortedReports);
-            
+            const { acumMap } = groupAndCalculateProgress(filteredReports);
+           
             let html = '';
-            for (const reporte of sortedReports) {
-                const acum = acumMap[reporte.id];
-                const eventCode = reporte.event?.event_code ?? 'N/A';
-                const eventName = reporte.event?.name ?? '';
-                const fecha = new Date(reporte.event_date).toLocaleDateString('es-ES');
-                const fotosCount = reporte.photos ? reporte.photos.length : 0;
-                const reportTitle = reporte.report_title.replace(/'/g, "\\'");
-                
-                html += `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            <div class="flex items-center">
-                                <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                ${fecha}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="text-sm">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
-                                    ${eventCode}
-                                </span>
-                                <p class="mt-1 text-gray-900 font-medium">${reporte.report_title}</p>
-                                ${eventName ? `<p class="text-xs text-gray-500">${eventName}</p>` : ''}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4">
-                            <div class="flex flex-col space-y-1 min-w-[180px]">
-                                <div class="flex items-center">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-800">
-                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                                        </svg>
-                                        +${reporte.attendees_count}
-                                    </span>
+            if (filteredReports.length === 0) {
+                html = `<tr><td colspan="5" class="text-center py-10 text-slate-400 font-medium">No hay reportes bajo los filtros seleccionados.</td></tr>`;
+            } else {
+                for (const reporte of filteredReports) {
+                    const acum = acumMap[reporte.id];
+                    const eventCode = reporte.event?.event_code ?? 'N/A';
+                    const eventName = reporte.event?.description ?? '';
+                    const fundingSource = reporte.event?.funding_source ?? 'gobierno_regional';
+                    const fecha = new Date(reporte.event_date).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                    const fotosCount = reporte.photos ? (Array.isArray(reporte.photos) ? reporte.photos.length : JSON.parse(reporte.photos).length) : 0;
+                    const cleanTitle = reporte.report_title.replace(/'/g, "\\'");
+
+                    // Insignia dinámica de Financiamiento
+                    const fundingBadge = fundingSource === 'gobierno_regional' 
+                        ? `<span class="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">Regional</span>`
+                        : `<span class="bg-amber-50 border border-amber-100 text-amber-700 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-wider">SUNAFIL</span>`;
+
+                    html += `
+                        <tr class="hover:bg-slate-50/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-xs font-bold text-slate-600">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-regular fa-calendar-days text-slate-400"></i>
+                                    ${fecha}
                                 </div>
-                                ${acum ? `
-                                    <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden shadow-inner">
-                                        <div class="bg-gradient-to-r from-indigo-500 to-blue-500 h-2 rounded-full transition-all duration-700 ease-out" style="width: ${acum.porcentaje}%" title="${acum.acumulado} de ${acum.meta} personas"></div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-xs">
+                                    <div class="flex items-center gap-2">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-md font-mono font-black bg-slate-900 text-white shadow-inner">${eventCode}</span>
+                                        ${fundingBadge}
                                     </div>
+                                    <p class="mt-1.5 text-slate-900 font-bold text-sm leading-snug">${reporte.report_title}</p>
+                                    ${eventName ? `<p class="text-[11px] text-slate-400 font-medium mt-0.5 line-clamp-1">${eventName}</p>` : ''}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col space-y-1.5 min-w-[200px]">
                                     <div class="flex justify-between items-center text-xs">
-                                        <span class="font-medium text-gray-700">
-                                            <span class="text-indigo-700 font-bold">${acum.acumulado}</span> 
-                                            <span class="text-gray-500">/ ${acum.meta}</span>
+                                        <span class="font-bold text-slate-700">
+                                            <i class="fa-solid fa-square-plus text-emerald-500 mr-1"></i>+${reporte.attendees_count} <span class="text-slate-400 font-normal">(&Sigma; ${numberWithCommas(acum.acumulado)})</span>
                                         </span>
-                                        <span class="font-semibold ${acum.porcentaje >= 100 ? 'text-green-600' : 'text-gray-600'}">
-                                            ${acum.porcentaje}%
-                                        </span>
+                                        <span class="font-black text-slate-900 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded">${acum.porcentaje}% Real</span>
                                     </div>
-                                ` : '<span class="text-xs text-gray-400">Meta no definida</span>'}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            ${fotosCount > 0 ? `
-                                <span class="inline-flex items-center text-blue-600">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                    ${fotosCount} foto(s)
+                                    <div class="w-full bg-slate-100 rounded-full h-2 flex overflow-hidden border border-slate-200/50 shadow-inner">
+                                        <div class="h-full transition-all duration-700 ${acum.porcentaje >= 100 ? 'bg-emerald-500' : 'bg-indigo-600'}" style="width: ${acum.w_base}%"></div>
+                                        <div class="bg-amber-400 h-full transition-all duration-700" style="width: ${acum.w_exceso}%"></div>
+                                    </div>
+                                    <div class="flex justify-between items-center text-[10px]">
+                                        <span class="text-slate-400 font-semibold">Meta Base: ${numberWithCommas(acum.meta)}</span>
+                                        ${acum.isSuperado ? `<span class="font-black text-amber-600 bg-amber-50 border border-amber-100 px-1 rounded"><i class="fa-solid fa-arrow-trend-up animate-pulse"></i> +${numberWithCommas(acum.excedenteIndividual)} Sobrecumplido</span>` : ''}
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex items-center gap-1 text-xs font-bold ${fotosCount > 0 ? 'text-blue-600' : 'text-slate-400'}">
+                                    <i class="fa-regular fa-image"></i>
+                                    ${fotosCount > 0 ? `${fotosCount} Captura(s)` : 'Sin Evidencia'}
                                 </span>
-                            ` : `
-                                <span class="inline-flex items-center text-gray-400">
-                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                    Sin fotos
-                                </span>
-                            `}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div class="flex justify-end space-x-2">
-                                <a href="/subevents/${reporte.id}" class="text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 p-2 rounded-full transition" title="Ver detalles">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                                    </svg>
-                                </a>
-                                <a href="/subevents/${reporte.id}/edit" class="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 p-2 rounded-full transition" title="Editar">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                    </svg>
-                                </a>
-                                <button onclick="confirmDelete(${reporte.id}, '${reportTitle}')" class="text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 p-2 rounded-full transition" title="Mover a papelera">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <div class="flex justify-center items-center gap-2">
+                                    <a href="/subevents/${reporte.id}" class="p-2 bg-slate-50 text-slate-600 rounded-xl hover:bg-slate-100 border border-slate-200 transition-colors" title="Auditar Reporte"><i class="fa-solid fa-eye text-xs"></i></a>
+                                    <a href="/subevents/${reporte.id}/edit" class="p-2 bg-indigo-50 text-indigo-600 rounded-xl hover:bg-indigo-100 border border-indigo-100/50 transition-colors" title="Modificar"><i class="fa-solid fa-pen-to-square text-xs"></i></a>
+                                    <button onclick="confirmDelete(${reporte.id}, '${cleanTitle}')" class="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 border border-red-100/50 transition-colors" title="Mover a Papelera"><i class="fa-solid fa-trash-can text-xs"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
             }
             tbody.innerHTML = html;
             updateSortIndicators();
         }
 
         function updateSortIndicators() {
-            fechaIndicator.style.opacity = '0';
-            actividadIndicator.style.opacity = '0';
-            avanceIndicator.style.opacity = '0';
-            fechaIndicator.textContent = '↓';
-            actividadIndicator.textContent = '';
-            avanceIndicator.textContent = '';
-            
-            if (currentSort === 'fecha') {
-                fechaIndicator.style.opacity = '1';
-                fechaIndicator.textContent = sortDirection === 'asc' ? '↓' : '↑';
-            } else if (currentSort === 'actividad') {
-                actividadIndicator.style.opacity = '1';
-                actividadIndicator.textContent = sortDirection === 'asc' ? '↓ (A-Z)' : '↑ (Z-A)';
-            } else if (currentSort === 'avance') {
-                avanceIndicator.style.opacity = '1';
-                avanceIndicator.textContent = avanceDirection === 'desc' ? '↓ (Mayor progreso)' : '↑ (Menor progreso)';
+            Object.keys(indicators).forEach(key => {
+                if(indicators[key]) {
+                    indicators[key].style.opacity = '0';
+                    indicators[key].textContent = '';
+                }
+            });
+
+            if (indicators[currentSort]) {
+                indicators[currentSort].style.opacity = '1';
+                if (currentSort === 'fecha') indicators[currentSort].textContent = sortDirection === 'asc' ? '↓' : '↑';
+                if (currentSort === 'actividad') indicators[currentSort].textContent = sortDirection === 'asc' ? '↓ (A-Z)' : '↑ (Z-A)';
+                if (currentSort === 'avance') indicators[currentSort].textContent = sortDirection === 'asc' ? '↓ (Menor)' : '↑ (Mayor)';
             }
         }
 
-        fechaHeader.addEventListener('click', () => {
-            if (currentSort === 'fecha') {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort = 'fecha';
-                sortDirection = 'asc';
-            }
-            renderTable();
+        function numberWithCommas(x) { return x.toString().replace(/\B(?=(\d{3})+(WARN\d)?)/g, ","); }
+
+        // Mapeo de eventos clic de cabecera para reordenamiento
+        document.querySelectorAll('[data-sort]').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortKey = header.dataset.sort;
+                if (currentSort === sortKey) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort = sortKey;
+                    sortDirection = 'asc';
+                }
+                renderTable();
+            });
         });
 
-        actividadHeader.addEventListener('click', () => {
-            if (currentSort === 'actividad') {
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort = 'actividad';
-                sortDirection = 'asc';
-            }
-            renderTable();
-        });
-
-        avanceHeader.addEventListener('click', () => {
-            if (currentSort === 'avance') {
-                avanceDirection = avanceDirection === 'desc' ? 'asc' : 'desc';
-            } else {
-                currentSort = 'avance';
-                avanceDirection = 'desc';
-            }
-            renderTable();
-        });
-
+        // Inicialización Forzada
         renderTable();
     </script>
 </x-app-layout>
+
