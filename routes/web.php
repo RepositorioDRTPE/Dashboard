@@ -13,6 +13,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\PhotoReportController;
 use App\Http\Controllers\BulletinController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\WorkshopController;
 
 
 
@@ -123,6 +124,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('bulletins', BulletinController::class);
     Route::resource('announcements', AnnouncementController::class);
+    Route::resource('workshops', WorkshopController::class);    
 
 
 });

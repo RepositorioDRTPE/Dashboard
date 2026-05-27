@@ -20,35 +20,46 @@ class AnnouncementController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'title'        => 'required|string|max:255',
-            'description'  => 'nullable|string',
-            'file'         => 'required|file|mimes:pdf,jpeg,png,jpg,webp|max:10240', // Max 10MB
-            'published_at' => 'required|date',
-            'expired_at'   => 'required|date|after_or_equal:published_at',
-        ], [
-            'file.mimes' => 'El archivo debe ser un documento PDF o una imagen (JPG, PNG, WEBP).',
-            'expired_at.after_or_equal' => 'La fecha de vencimiento no puede ser menor a la de publicación.'
-        ]);
+{
+    $request->validate([
+        'title'         => 'required|string|max:255',
+        'description'   => 'nullable|string',
+        'file'          => 'required|file|mimes:pdf,jpeg,png,jpg,webp|max:10240',
+        'published_at'  => 'required|date',
+        'expired_at'    => 'required|date|after_or_equal:published_at',
+        'attachments'   => 'nullable|array|max:6', // Límite estricto de 6 archivos
+        'attachments.*' => 'file|mimes:pdf,jpeg,png,jpg,webp|max:10240',
+    ]);
 
-        $file = $request->file('file');
-        $extension = strtolower($file->getClientOriginalExtension());
-        $fileType = ($extension === 'pdf') ? 'pdf' : 'image';
+    // 1. Guardar el archivo principal del comunicado
+    $file = $request->file('file');
+    $extension = strtolower($file->getClientOriginalExtension());
+    $fileType = ($extension === 'pdf') ? 'pdf' : 'image';
+    $mainPath = $file->store('announcements', 'public');
 
-        $path = $file->store('announcements', 'public');
-
-        Announcement::create([
-            'title'        => $request->title,
-            'description'  => $request->description,
-            'file_path'    => $path,
-            'file_type'    => $fileType,
-            'published_at' => $request->published_at,
-            'expired_at'   => $request->expired_at,
-        ]);
-
-        return redirect()->route('announcements.index')->with('success', 'Comunicado creado con éxito.');
+    // 2. Procesar los archivos adjuntos complementarios opcionales
+    $attachmentsPaths = [];
+    if ($request->hasFile('attachments')) {
+        foreach ($request->file('attachments') as $attachedFile) {
+            $attachmentsPaths[] = $attachedFile->store('announcements/attachments', 'public');
+        }
     }
+
+    // 3. Crear el registro consolidado
+    \App\Models\Announcement::create([
+        'title'        => $request->title,
+        'description'  => $request->description,
+        'file_path'    => $mainPath,
+        'file_type'    => $fileType,
+        'attachments'  => $attachmentsPaths, // Laravel lo parsea a JSON automáticamente por el cast
+        'published_at' => $request->published_at,
+        'expired_at'   => $request->expired_at,
+    ]);
+
+    return redirect()->route('announcements.index')->with('success', 'Comunicado y adjuntos publicados con éxito.');
+}
+
+
 
     public function edit(Announcement $announcement)
     {

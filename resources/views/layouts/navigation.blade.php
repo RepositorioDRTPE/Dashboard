@@ -1,5 +1,6 @@
 <nav x-data="{ openSidebar: false }" class="relative z-50">
    
+    {{-- BARRA SUPERIOR MÓVIL --}}
     <div class="sm:hidden flex items-center justify-between bg-white border-b border-slate-200 px-4 py-3 shadow-sm sticky top-0 z-40">
         <button @click="openSidebar = true" class="text-slate-500 hover:text-indigo-600 focus:outline-none transition-colors p-2 -ml-2">
             <i class="fa-solid fa-bars text-xl"></i>
@@ -7,7 +8,7 @@
        
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2">
             <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 w-auto">
-            <span class="font-black text-slate-800 text-sm tracking-widest">DTPE</span>
+            <span class="font-black text-slate-800 text-sm tracking-widest">DRTPE</span>
         </a>
 
         <div class="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
@@ -15,18 +16,20 @@
         </div>
     </div>
 
-    <div x-show="openSidebar"
+    {{-- CAPA OSCURA MÓVIL --}}
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 sm:hidden"
+         x-show="openSidebar"
          x-transition:enter="transition-opacity ease-linear duration-300"
          x-transition:enter-start="opacity-0"
          x-transition:enter-end="opacity-100"
          x-transition:leave="transition-opacity ease-linear duration-300"
          x-transition:leave-start="opacity-100"
          x-transition:leave-end="opacity-0"
-         class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 sm:hidden"
          @click="openSidebar = false"
          style="display: none;">
     </div>
 
+    {{-- SIDEBAR ESTRUCTURAL --}}
     <aside :class="openSidebar ? 'translate-x-0' : '-translate-x-full'"
            class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-900 flex flex-col transition-transform duration-300 ease-in-out sm:translate-x-0 shadow-2xl border-r border-slate-800 h-screen">
        
@@ -34,7 +37,7 @@
             <a href="{{ route('dashboard') }}" class="flex items-center gap-3 group w-full bg-white p-2 rounded-xl shadow-lg border border-slate-200 transition-transform hover:scale-105">
                 <img src="{{ asset('images/logo.png') }}" alt="Logo" class="h-8 w-auto object-contain">
                 <div class="flex flex-col text-left">
-                    <span class="text-slate-900 font-black text-xs leading-none uppercase tracking-widest">DTPE</span>
+                    <span class="text-slate-900 font-black text-xs leading-none uppercase tracking-widest">DRTPE</span>
                     <span class="text-slate-500 font-bold text-[9px] uppercase tracking-widest">Puno Perú</span>
                 </div>
             </a>
@@ -73,10 +76,24 @@
                 <span>{{ __('Reportes') }}</span>
             </a>
 
+            <a href="{{ route('workshops.index') }}"
+               class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('workshops.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+                <i class="fa-solid fa-chalkboard-user text-lg {{ request()->routeIs('workshops.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
+                <span>{{ __('Talleres y Capacitaciones') }}</span>
+            </a>
+
             <a href="{{ route('reports.index') }}"
                class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all group {{ request()->routeIs('reports.*') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
                 <i class="fa-solid fa-chart-column text-lg {{ request()->routeIs('reports.*') ? '' : 'group-hover:scale-110 transition-transform' }}"></i>
                 <span>Analisis Gráfico</span>
+            </a>
+
+            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Alertas y Avisos</div>
+
+            <a href="{{ route('announcements.index') }}"
+               class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group {{ request()->routeIs('announcements.*') ? 'bg-gradient-to-r from-red-600 to-red-700 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)] border border-red-500/50' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
+                <i class="fa-solid fa-bullhorn text-lg {{ request()->routeIs('announcements.*') ? '' : 'group-hover:text-red-400 transition-colors' }}"></i>
+                <span>Comunicados Oficiales</span>
             </a>
 
             <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Galería e Impacto</div>
@@ -90,7 +107,7 @@
             <a href="{{ route('photo-reports.create', ['type' => 'evento']) }}"
                class="flex items-center justify-between px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1">
                 <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-calendar-star text-lg group-hover:text-red-400 transition-colors"></i>
+                    <i class="fa-solid fa-calendar-plus text-lg group-hover:text-red-400 transition-colors"></i>
                     <span>Registrar Evento</span>
                 </div>
             </a>
@@ -110,16 +127,6 @@
                 <i class="fa-solid fa-file-pdf text-lg {{ request()->routeIs('bulletins.*') ? '' : 'group-hover:text-amber-400 transition-colors' }}"></i>
                 <span>Boletines Informativos</span>
             </a>
-            <div class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3 ml-2 mt-6">Publicaciones Oficiales</div>
-
-<a href="{{ route('bulletins.index') }}" ...> </a>
-
-<a href="{{ route('announcements.index') }}"
-   class="flex items-center gap-3 px-4 py-3.5 rounded-xl font-bold transition-all duration-300 group {{ request()->routeIs('announcements.*') ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-lg' : 'text-slate-300 hover:bg-white/10 hover:text-white hover:translate-x-1' }}">
-    <i class="fa-solid fa-bullhorn text-lg {{ request()->routeIs('announcements.*') ? '' : 'group-hover:text-amber-400 transition-colors' }}"></i>
-    <span>Comunicados Oficiales</span>
-</a>
-
         </div>
 
         <div class="p-4 border-t border-slate-800 bg-slate-950/30 shrink-0">
@@ -147,6 +154,3 @@
         </div>
     </aside>
 </nav>
-
-
-
