@@ -17,14 +17,13 @@
     <div class="max-w-3xl mx-auto py-8 px-4 sm:px-0">
         <form action="{{ route('announcements.store') }}" method="POST" enctype="multipart/form-data"
               class="bg-white border border-slate-100 shadow-2xl rounded-2xl p-6 sm:p-10 space-y-6"
-              x-data="{ 
+              x-data="{
                   attachedFiles: [],
                   mainPreviewUrl: null,
                   mainFileType: null,
                   mainFileName: '',
                   mainFileSize: '',
-                  
-                  // Procesar archivo principal
+                 
                   handleMainFile(e) {
                       const file = e.target.files[0];
                       if (!file) return;
@@ -35,11 +34,9 @@
                       this.mainPreviewUrl = URL.createObjectURL(file);
                   },
 
-                  // MODIFICADO: Agregar archivos en tandas sin sobreescribir los anteriores
                   addAttachments(e) {
                       const selectedFiles = Array.from(e.target.files);
                       selectedFiles.forEach(file => {
-                          // Evita cargar archivos duplicados idénticos en la cola
                           const isDuplicate = this.attachedFiles.some(f => f.name === file.name && f.size === file.size);
                           if (!isDuplicate && this.attachedFiles.length < 6) {
                               this.attachedFiles.push(file);
@@ -48,53 +45,62 @@
                       this.syncInputFiles();
                   },
 
-                  // MODIFICADO: Eliminar un archivo específico de la lista de anexos
                   removeAttachment(index) {
                       this.attachedFiles.splice(index, 1);
                       this.syncInputFiles();
                   },
 
-                  // MODIFICADO: Forzar la sincronización del input HTML con lo que el usuario ve en pantalla
                   syncInputFiles() {
                       const dt = new DataTransfer();
                       this.attachedFiles.forEach(file => dt.items.add(file));
                       this.$refs.attachmentsInputRaw.files = dt.files;
-                      
-                      // Resetea el value temporal del explorador para dejarlo listo para otra tanda
                       this.$refs.attachmentsInputRaw.value = '';
                   }
               }">
             @csrf
            
+            {{-- Panel de Control de Errores de Validación Backend --}}
+            @if ($errors->any())
+                <div class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs font-bold rounded-xl space-y-1">
+                    <p class="font-black uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> Atención: Revisa los campos</p>
+                    <ul class="list-disc pl-4 space-y-0.5 font-medium">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             <div class="space-y-2">
                 <label class="block text-sm font-black text-slate-700 tracking-tight">Título Principal del Comunicado</label>
-                <input type="text" name="title" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner placeholder:font-medium placeholder:text-slate-400 text-sm" placeholder="Ej. Comunicado N° 024-2026-DRTPE/PUNO">
+                <input type="text" name="title" value="{{ old('title') }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner placeholder:font-medium placeholder:text-slate-400 text-sm" placeholder="Ej. Comunicado N° 024-2026-DRTPE/PUNO">
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="space-y-2">
                     <label class="block text-sm font-black text-slate-700 tracking-tight">Fecha de Publicación (Lanzamiento)</label>
-                    <input type="date" name="published_at" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner text-sm">
+                    <input type="date" name="published_at" value="{{ old('published_at') }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner text-sm">
                 </div>
                 <div class="space-y-2">
                     <label class="block text-sm font-black text-slate-700 tracking-tight">Fecha de Retiro (Vencimiento)</label>
-                    <input type="date" name="expired_at" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner text-sm">
+                    <input type="date" name="expired_at" value="{{ old('expired_at') }}" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-semibold text-slate-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner text-sm">
                 </div>
             </div>
 
             <div class="space-y-2">
-                <label class="block text-sm font-black text-slate-700 tracking-tight">Sumilla / Descripción Informativa Cort <span class="text-slate-400 font-medium">(Opcional)</span></label>
-                <textarea name="description" rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner placeholder:text-slate-400 placeholder:text-xs text-sm" placeholder="Escriba un breve resumen del contenido del comunicado para el ciudadano..."></textarea>
+                <label class="block text-sm font-black text-slate-700 tracking-tight">Sumilla / Descripción Informativa Corta <span class="text-slate-400 font-medium">(Opcional)</span></label>
+                <textarea name="description" rows="3" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-medium text-slate-700 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 focus:outline-none transition-all shadow-inner placeholder:text-slate-400 placeholder:text-xs text-sm" placeholder="Escriba un breve resumen del contenido del comunicado..."></textarea>
             </div>
 
+            {{-- SECCIÓN MODIFICADA: UN SOLO INPUT DE CONTROL GENERAL --}}
             <div class="space-y-2">
                 <label class="block text-sm font-black text-slate-700 tracking-tight">Documento Base Principal <span class="text-red-500">*</span></label>
-                
-                <div x-show="!mainPreviewUrl" 
+               
+                <input type="file" x-ref="mainFileInput" name="file" accept="application/pdf, image/*" 
+                       :required="!mainPreviewUrl" class="hidden" @change="handleMainFile($event)">
+
+                <div x-show="!mainPreviewUrl" @click="$refs.mainFileInput.click()"
                      class="border-2 border-dashed border-slate-200 hover:border-amber-500/50 rounded-xl p-6 text-center bg-slate-50 hover:bg-slate-100/30 transition-colors relative cursor-pointer group">
-                    <input type="file" name="file" accept="application/pdf, image/*" required 
-                           class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                           @change="handleMainFile($event)">
                     <div class="space-y-2 relative z-10">
                         <div class="w-10 h-10 bg-white border border-slate-200 rounded-lg flex items-center justify-center mx-auto text-slate-400 group-hover:text-amber-500 transition-colors shadow-sm"><i class="fa-solid fa-file-invoice text-base"></i></div>
                         <p class="text-xs font-black text-slate-600">Suelte el afiche o el PDF matriz aquí o explore</p>
@@ -102,7 +108,7 @@
                     </div>
                 </div>
 
-                <div x-show="mainPreviewUrl" x-cloak 
+                <div x-show="mainPreviewUrl" x-cloak
                      class="border border-slate-200 bg-slate-50 rounded-2xl p-4 flex flex-col md:flex-row gap-4 items-stretch h-[320px]">
                     <div class="w-full md:w-[55%] bg-slate-950 flex items-center justify-center rounded-xl overflow-hidden border border-slate-200 relative">
                         <template x-if="mainFileType === 'image'">
@@ -124,12 +130,10 @@
                                 <p class="text-slate-700 font-bold text-xs font-mono" x-text="mainFileSize"></p>
                             </div>
                         </div>
-                        <div class="relative overflow-hidden bg-white border border-slate-200 text-slate-700 text-center font-black text-xs uppercase tracking-wider py-3 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition cursor-pointer">
-                            <input type="file" name="file" accept="application/pdf, image/*" 
-                                   class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
-                                   @change="handleMainFile($event)">
+                        <button type="button" @click="$refs.mainFileInput.click()" 
+                                class="w-full bg-white border border-slate-200 text-slate-700 text-center font-black text-xs uppercase tracking-wider py-3 px-4 rounded-xl shadow-sm hover:bg-slate-50 transition cursor-pointer">
                             <i class="fa-solid fa-arrow-rotate-left mr-1 text-amber-500"></i> Reemplazar Archivo
-                        </div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -171,9 +175,8 @@
                                         <p class="text-[9px] font-mono font-medium text-slate-400 mt-1" x-text="(file.size / (1024*1024)).toFixed(2) + ' MB'"></p>
                                     </div>
                                 </div>
-                                <button type="button" @click="removeAttachment(index)" 
-                                        class="w-8 h-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all shrink-0 border border-transparent hover:border-red-100"
-                                        title="Eliminar este archivo de la cola">
+                                <button type="button" @click="removeAttachment(index)"
+                                        class="w-8 h-8 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-all shrink-0 border border-transparent hover:border-red-100">
                                     <i class="fa-solid fa-trash-can text-xs"></i>
                                 </button>
                             </div>

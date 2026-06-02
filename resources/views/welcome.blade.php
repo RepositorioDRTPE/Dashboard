@@ -765,45 +765,33 @@
     @endif
 
 @php
-    // ── PROCESADOR SEGURO AJUSTADO A TU BASE DE DATOS REAL ──
-    $mapWorkshop = function($collection, $defaultType) {
-        return $collection->map(function($item) use ($defaultType) {
+    // ── SANITIZADOR ABSOLUTO DE RUTAS DE LARAGON/WINDOWS ──
+    $parseWorkshopItem = function($collection, $defaultType, $isPastEvent) {
+        return $collection->map(function($item) use ($defaultType, $isPastEvent) {
             
-            // 1. Mapeo exacto de 'document_path' (Tu afiche o documento matriz)
-            $docPath = trim($item->document_path ?? '');
-            $docUrl = '';
-            if (!empty($docPath)) {
-                $docPath = ltrim($docPath, '/');
-                $docPath = str_replace(['public/', 'storage/'], '', $docPath);
-                $docUrl = asset('storage/' . $docPath);
-            }
+            // Función limpia-rutas para corregir barras invertidas de Windows (\ hacia /)
+            $sanitizePath = function($path) {
+                if (empty($path)) return '';
+                $path = str_replace('\\', '/', trim($path));
+                $path = ltrim($path, '/');
+                $path = str_replace(['public/', 'storage/'], '', $path);
+                return asset('storage/' . $path);
+            };
 
-            // 2. Mapeo exacto de 'requirements_path' (Tus bases complementarias)
-            $reqPath = trim($item->requirements_path ?? '');
-            $reqUrl = '';
-            if (!empty($reqPath)) {
-                $reqPath = ltrim($reqPath, '/');
-                $reqPath = str_replace(['public/', 'storage/'], '', $reqPath);
-                $reqUrl = asset('storage/' . $reqPath);
-            }
+            // Mapeo de campos reales de tu Base de Datos: document_path y requirements_path
+            $docUrl = $sanitizePath($item->document_path ?? '');
+            $reqUrl = $sanitizePath($item->requirements_path ?? '');
 
-            // 3. Mapeo y decodificación de la columna 'photos'
+            // Decodificación y limpieza de la columna text 'photos'
             $rawPhotos = $item->photos;
             if (is_string($rawPhotos)) { $rawPhotos = json_decode($rawPhotos, true); }
             $photosArr = is_array($rawPhotos) ? $rawPhotos : [];
             
             $cleanPhotos = [];
             foreach ($photosArr as $p) {
-                $p = trim($p);
-                if (!empty($p)) {
-                    $p = ltrim($p, '/');
-                    $p = str_replace(['public/', 'storage/'], '', $p);
-                    $cleanPhotos[] = asset('storage/' . $p);
-                }
+                $sanitizedPhoto = $sanitizePath($p);
+                if (!empty($sanitizedPhoto)) { $cleanPhotos[] = $sanitizedPhoto; }
             }
-
-            // Determinar automáticamente si es pasado o futuro según el reloj del servidor
-            $isPast = $item->scheduled_at ? $item->scheduled_at->isPast() : true;
 
             return [
                 'title' => $item->title,
@@ -813,31 +801,33 @@
                 'document' => $docUrl,
                 'requirements' => $reqUrl,
                 'photos' => array_values($cleanPhotos),
-                'isPast' => $isPast
+                'isPast' => $isPastEvent
             ];
         })->values()->toArray();
     };
 
-    // Empaquetado final de colecciones limpias
-    $jsonPorHacer = isset($capacitacionesPorHacer) ? $mapWorkshop($capacitacionesPorHacer, 'capacitacion') : [];
-    $jsonHechas = isset($capacitacionesHechas) ? $mapWorkshop($capacitacionesHechas, 'capacitacion') : [];
-    $jsonCoordinaciones = isset($coordinacionesHechas) ? $mapWorkshop($coordinacionesHechas, 'coordinacion') : [];
+    // Procesamiento seguro de datos
+    $jsonPorHacer = isset($capacitacionesPorHacer) ? $parseWorkshopItem($capacitacionesPorHacer, 'capacitacion', false) : [];
+    $jsonHechas = isset($capacitacionesHechas) ? $parseWorkshopItem($capacitacionesHechas, 'capacitacion', true) : [];
+    $jsonCoordinaciones = isset($coordinacionesHechas) ? $parseWorkshopItem($coordinacionesHechas, 'coordinacion', true) : [];
 @endphp
 
 <script>
-    // Inyección inmune a errores de comillas dobles en JavaScript
+    // Inyección global limpia inmune a quiebres de strings
     window.portalPorHacer = @json($jsonPorHacer);
     window.portalHechas = @json($jsonHechas);
     window.portalCoordinaciones = @json($jsonCoordinaciones);
 </script>
 
-{{-- CONTENEDOR OPERATIVO DE SECCIONES --}}
+{{-- CONTAINER OPERATIVO BASE --}}
 @if(isset($capacitacionesPorHacer) || isset($capacitacionesHechas) || isset($coordinacionesHechas))
 <div class="section-deep py-16" 
      x-data="{ 
          limitPorHacer: 3, 
          limitHechas: 3, 
          limitCoordinaciones: 3,
+         
+         // Control del Modal e Índices de Galería
          viewModal: false,
          selectedWorkshop: null,
          galleryIndex: 0,
@@ -846,12 +836,12 @@
              this.selectedWorkshop = data;
              this.galleryIndex = 0;
              this.viewModal = true;
-             document.body.style.overflow = 'hidden';
+             document.body.style.overflow = 'hidden'; // Congela el fondo de la web
          },
          closeViewer() {
              this.viewModal = false;
              this.selectedWorkshop = null;
-             document.body.style.overflow = '';
+             document.body.style.overflow = ''; // Libera el fondo de la web
          },
          isImage(url) {
              if (!url) return false;
@@ -862,153 +852,364 @@
     
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
 
-        {{-- ════════════════ SECCIÓN A: PRÓXIMAS CAPACITACIONES ════════════════ --}}
-        @if(isset($capacitacionesPorHacer) && $capacitacionesPorHacer->count() > 0)
-        <div id="seccion-por-hacer" class="space-y-6">
-            <div class="flex items-center gap-3 bg-slate-950/50 border border-white/05 p-4 rounded-2xl shadow-xl">
-                <div class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping flex-shrink-0"></div>
-                <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-hourglass-start text-blue-500"></i> Próximos Talleres y Capacitaciones Programadas
-                </h3>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                @foreach($capacitacionesPorHacer as $item)
-                <div x-show="{{ $loop->index }} < limitPorHacer" 
-                     @click="openViewer(window.portalPorHacer[{{ $loop->index }}])"
-                     class="bg-slate-950/60 p-6 border border-white/10 rounded-2xl flex flex-col justify-between min-h-[13rem] relative overflow-hidden group hover:border-blue-500/40 transition-all duration-300 cursor-pointer hover:-translate-y-1 shadow-lg">
-                    <div>
-                        <div class="flex flex-wrap justify-between items-center gap-2 mb-2">
-                            <span class="text-[10px] font-mono font-black text-blue-400 uppercase tracking-widest bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded-md">Vigente</span>
-                            <span class="text-slate-400 text-xs font-bold"><i class="fa-regular fa-clock mr-1"></i>{{ $item->scheduled_at->format('d/m/Y h:i A') }}</span>
-                        </div>
-                        <h4 class="text-white font-black text-base line-clamp-1 group-hover:text-blue-400 transition-colors mt-2 uppercase tracking-tight">{{ $item->title }}</h4>
-                        <p class="text-slate-400 text-xs font-medium line-clamp-3 mt-2 leading-relaxed">{{ $item->description }}</p>
-                    </div>
-                    <div class="text-[10px] text-blue-400 font-bold flex items-center gap-1 mt-4 self-end">Examinar bases e inscripción <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i></div>
+        {{-- ════════════════ SECCIÓN A: PRÓXIMAS / POR HACER ════════════════ --}}
+@if(isset($capacitacionesPorHacer) && $capacitacionesPorHacer->count() > 0)
+<div id="seccion-por-hacer" class="space-y-6">
+    <div class="flex items-center gap-3 bg-slate-950/50 border border-white/05 p-4 rounded-2xl shadow-xl">
+        <div class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-ping flex-shrink-0"></div>
+        <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-hourglass-start text-blue-500"></i> Próximos Talleres y Capacitaciones Programadas
+        </h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach($capacitacionesPorHacer as $item)
+        @php
+            $docPath = str_replace('\\', '/', trim($item->document_path ?? ''));
+            $docPath = ltrim($docPath, '/');
+            $docPath = preg_replace('#^(public/|storage/)#', '', $docPath);
+            $docUrl  = $docPath ? asset('storage/' . $docPath) : null;
+            $ext     = $docPath ? strtolower(pathinfo($docPath, PATHINFO_EXTENSION)) : '';
+            $isImg   = in_array($ext, ['jpg','jpeg','png','webp','gif']);
+
+            // Fallback: primera foto si no hay document
+            $pArr2 = is_string($item->photos) ? json_decode($item->photos, true) : ($item->photos ?? []);
+            $fallbackPhoto = null;
+            if (!$docUrl && !empty($pArr2)) {
+                $fp = str_replace('\\', '/', trim($pArr2[0]));
+                $fp = ltrim($fp, '/');
+                $fp = preg_replace('#^(public/|storage/)#', '', $fp);
+                $fallbackPhoto = asset('storage/' . $fp);
+            }
+        @endphp
+        <div x-show="{{ $loop->index }} < limitPorHacer"
+             @click="openViewer(window.portalPorHacer[{{ $loop->index }}])"
+             class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-xl hover:-translate-y-1.5 transition-all duration-300"
+             style="height: 260px;">
+
+            {{-- FONDO: imagen si existe, PDF como iframe, o gradiente fallback --}}
+            @if($docUrl && $isImg)
+                <img src="{{ $docUrl }}"
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     loading="lazy" alt="">
+            @elseif($docUrl && !$isImg)
+                {{-- PDF: iframe no-interactivo de fondo --}}
+                <div class="absolute inset-0 bg-slate-900 overflow-hidden pointer-events-none">
+                    <iframe src="{{ $docUrl }}#toolbar=0&navpanes=0&scrollbar=0&view=Fit"
+                            class="w-full h-full border-none scale-110 origin-top"
+                            loading="lazy"></iframe>
                 </div>
-                @endforeach
+            @elseif($fallbackPhoto)
+                <img src="{{ $fallbackPhoto }}"
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     loading="lazy" alt="">
+            @else
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-950 via-slate-900 to-slate-950"></div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-10">
+                    <i class="fa-solid fa-calendar-days text-blue-300 text-6xl"></i>
+                </div>
+            @endif
+
+            {{-- GRADIENTE ENCIMA --}}
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-blue-950/20"></div>
+
+            {{-- BADGE SUPERIOR IZQUIERDO --}}
+            <div class="absolute top-3 left-3 z-10 flex items-center gap-1.5">
+                <span class="text-[9px] font-mono font-black text-white bg-blue-600/90 backdrop-blur-sm border border-blue-400/30 px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-lg flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-blue-300 animate-pulse"></span> Vigente
+                </span>
             </div>
 
-            @if($capacitacionesPorHacer->count() > 3)
-            <div class="text-center pt-2" x-show="limitPorHacer < {{ $capacitacionesPorHacer->count() }}">
-                <button type="button" @click="limitPorHacer += 5" class="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 border border-white/10 hover:border-blue-500/50 text-slate-400 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md">
-                    <i class="fa-solid fa-plus text-blue-500"></i> Ver 5 capacitaciones más
-                </button>
+            {{-- BADGE TIPO ARCHIVO SUPERIOR DERECHO --}}
+            @if($docUrl)
+            <div class="absolute top-3 right-3 z-10">
+                <span class="text-[9px] font-bold text-white bg-black/50 backdrop-blur-sm border border-white/10 px-2 py-1 rounded-lg flex items-center gap-1 shadow">
+                    <i class="fa-solid {{ $isImg ? 'fa-image' : 'fa-file-pdf text-red-400' }} text-[8px]"></i>
+                    {{ $isImg ? 'Imagen' : 'PDF' }}
+                </span>
             </div>
             @endif
-        </div>
-        @endif
 
-        {{-- ════════════════ SECCIÓN B: CAPACITACIONES EJECUTADAS ════════════════ --}}
-        @if(isset($capacitacionesHechas) && $capacitacionesHechas->count() > 0)
-        <div id="seccion-hechas" class="space-y-6">
-            <div class="flex items-center gap-3 bg-slate-950/50 border border-white/05 p-4 rounded-2xl shadow-xl">
-                <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-circle-check text-emerald-500"></i> Registro de Capacitaciones Ejecutadas con Éxito
-                </h3>
-            </div>
-            
-            <div class="space-y-4">
-                @foreach($capacitacionesHechas as $taller)
-                @php
-                    $rawPhotos = is_string($taller->photos) ? json_decode($taller->photos, true) : ($taller->photos ?? []);
-                    $countPhotos = is_array($rawPhotos) ? count($rawPhotos) : 0;
-                @endphp
-                <div x-show="{{ $loop->index }} < limitHechas" 
-                     @click="openViewer(window.portalHechas[{{ $loop->index }}])"
-                     class="bg-slate-950/60 p-5 border border-white/10 rounded-2xl flex flex-col sm:flex-row justify-between sm:items-center gap-4 cursor-pointer hover:bg-slate-900/60 transition-all duration-200 group border-l-4 border-l-emerald-600/50 shadow-lg">
-                    <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-3">
-                            <span class="text-[9px] font-mono font-black text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded uppercase tracking-wider">Finalizado</span>
-                            <h4 class="text-white font-black text-base truncate uppercase group-hover:text-emerald-400 transition-colors">{{ $taller->title }}</h4>
-                        </div>
-                        <p class="text-slate-400 text-xs mt-1 font-medium line-clamp-1 max-w-2xl">{{ $taller->description }}</p>
-                    </div>
-                    <div class="flex items-center gap-4 shrink-0">
-                        <span class="text-slate-500 text-xs font-mono font-bold"><i class="fa-regular fa-image mr-1 text-emerald-500"></i>{{ $countPhotos }} Evidencias</span>
-                        <div class="w-8 h-8 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-300 group-hover:bg-emerald-600 group-hover:text-white transition-all"><i class="fa-solid fa-camera-retro text-xs"></i></div>
-                    </div>
+            {{-- CONTENIDO INFERIOR --}}
+            <div class="absolute bottom-0 left-0 right-0 z-10 p-4 space-y-2">
+                <p class="text-slate-400 text-[10px] font-bold">
+                    <i class="fa-regular fa-clock mr-1 text-blue-400"></i>
+                    {{ $item->scheduled_at->format('d/m/Y') }}
+                </p>
+                <h4 class="text-white font-black text-sm uppercase leading-snug line-clamp-2 group-hover:text-blue-300 transition-colors drop-shadow-lg">
+                    {{ $item->title }}
+                </h4>
+                <p class="text-slate-400 text-[10px] font-medium line-clamp-1 leading-relaxed">
+                    {{ Str::limit($item->description, 60) }}
+                </p>
+
+                <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                    <span class="text-[10px] text-slate-300 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-lines text-blue-400 text-[9px]"></i>
+                        Ver requisitos
+                    </span>
+                    <span class="text-[10px] text-blue-400 font-black flex items-center gap-1 group-hover:gap-2 transition-all">
+                        Inscripción <i class="fa-solid fa-arrow-right text-[8px]"></i>
+                    </span>
                 </div>
-                @endforeach
             </div>
 
-            @if($capacitacionesHechas->count() > 3)
-            <div class="text-center pt-2" x-show="limitHechas < {{ $capacitacionesHechas->count() }}">
-                <button type="button" @click="limitHechas += 5" class="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 border border-white/10 hover:border-emerald-500/50 text-slate-400 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md">
-                    <i class="fa-solid fa-plus text-emerald-500"></i> Ver 5 históricos más
-                </button>
+        </div>
+        @endforeach
+    </div>
+
+    @if($capacitacionesPorHacer->count() > 3)
+    <div class="text-center pt-2" x-show="limitPorHacer < {{ $capacitacionesPorHacer->count() }}">
+        <button type="button" @click="limitPorHacer += 5" class="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 border border-white/10 hover:border-blue-500/50 text-slate-400 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md">
+            <i class="fa-solid fa-plus text-blue-500"></i> Ver 5 capacitaciones más
+        </button>
+    </div>
+    @endif
+</div>
+@endif
+
+
+        {{-- ════════════════ SECCIÓN B: RECIÉN EJECUTADAS ════════════════ --}}
+@if(isset($capacitacionesHechas) && $capacitacionesHechas->count() > 0)
+<div id="seccion-hechas" class="space-y-6">
+    <div class="flex items-center gap-3 bg-slate-950/50 border border-white/05 p-4 rounded-2xl shadow-xl">
+        <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 flex-shrink-0"></div>
+        <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-emerald-500"></i> Registro de Capacitaciones Ejecutadas con Éxito
+        </h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach($capacitacionesHechas as $taller)
+        @php
+            $pArr = is_string($taller->photos) ? json_decode($taller->photos, true) : ($taller->photos ?? []);
+            $coverPhoto = null;
+            if (!empty($pArr)) {
+                $first = $pArr[0];
+                $first = str_replace('\\', '/', trim($first));
+                $first = ltrim($first, '/');
+                $first = preg_replace('#^(public/|storage/)#', '', $first);
+                $coverPhoto = asset('storage/' . $first);
+            }
+        @endphp
+        <div x-show="{{ $loop->index }} < limitHechas" 
+             @click="openViewer(window.portalHechas[{{ $loop->index }}])"
+             class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-xl hover:-translate-y-1.5 transition-all duration-300"
+             style="height: 260px;">
+
+            {{-- FONDO: foto o gradiente fallback --}}
+            @if($coverPhoto)
+                <img src="{{ $coverPhoto }}" 
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     loading="lazy" alt="">
+            @else
+                <div class="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900"></div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-10">
+                    <i class="fa-solid fa-camera text-white text-6xl"></i>
+                </div>
+            @endif
+
+            {{-- GRADIENTE ENCIMA DE LA FOTO --}}
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-900/20"></div>
+
+            {{-- BADGE SUPERIOR IZQUIERDO --}}
+            <div class="absolute top-3 left-3 z-10">
+                <span class="text-[9px] font-mono font-black text-white bg-red-600/90 backdrop-blur-sm border border-red-400/30 px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-lg">
+                    Concluido
+                </span>
+            </div>
+
+            {{-- BADGE FOTO COUNT SUPERIOR DERECHO --}}
+            <div class="absolute top-3 right-3 z-10">
+                <span class="text-[9px] font-bold text-white bg-black/50 backdrop-blur-sm border border-white/10 px-2 py-1 rounded-lg flex items-center gap-1 shadow">
+                    <i class="fa-solid fa-images text-[8px]"></i> {{ count($pArr) }}
+                </span>
+            </div>
+
+            {{-- CONTENIDO INFERIOR --}}
+            <div class="absolute bottom-0 left-0 right-0 z-10 p-4 space-y-2">
+                <p class="text-slate-400 text-[10px] font-bold">
+                    <i class="fa-regular fa-calendar-check mr-1 text-emerald-400"></i>
+                    {{ $taller->scheduled_at->format('d/m/Y') }}
+                </p>
+                <h4 class="text-white font-black text-sm uppercase leading-snug line-clamp-2 group-hover:text-emerald-300 transition-colors drop-shadow-lg">
+                    {{ $taller->title }}
+                </h4>
+
+                <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                    <span class="text-[10px] text-slate-300 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-users text-emerald-400 text-[9px]"></i>
+                        {{ $taller->attendees_count ?? '—' }} asistentes
+                    </span>
+                    <span class="text-[10px] text-emerald-400 font-black flex items-center gap-1 group-hover:gap-2 transition-all">
+                        Ver en cronología <i class="fa-solid fa-arrow-right text-[8px]"></i>
+                    </span>
+                </div>
+            </div>
+
+        </div>
+        @endforeach
+    </div>
+
+    @if($capacitacionesHechas->count() > 3)
+    <div class="text-center pt-2" x-show="limitHechas < {{ $capacitacionesHechas->count() }}">
+        <button type="button" @click="limitHechas += 5" class="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 border border-white/10 hover:border-emerald-500/50 text-slate-400 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md">
+            <i class="fa-solid fa-plus text-emerald-500"></i> Ver 5 históricos más
+        </button>
+    </div>
+    @endif
+</div>
+@endif
+
+
+
+       {{-- ════════════════ SECCIÓN C: COORDINACIONES ════════════════ --}}
+@if(isset($coordinacionesHechas) && $coordinacionesHechas->count() > 0)
+<div id="seccion-coordinaciones" class="space-y-6">
+    <div class="flex items-center gap-3 bg-slate-950/50 border border-white/05 p-4 rounded-2xl shadow-xl">
+        <div class="w-2.5 h-2.5 rounded-full bg-indigo-500 flex-shrink-0"></div>
+        <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-handshake text-indigo-400"></i> Coordinaciones e Informes Interinstitucionales
+        </h3>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        @foreach($coordinacionesHechas as $coor)
+        @php
+            $cDocPath = str_replace('\\', '/', trim($coor->document_path ?? ''));
+            $cDocPath = ltrim($cDocPath, '/');
+            $cDocPath = preg_replace('#^(public/|storage/)#', '', $cDocPath);
+            $cDocUrl  = $cDocPath ? asset('storage/' . $cDocPath) : null;
+            $cExt     = $cDocPath ? strtolower(pathinfo($cDocPath, PATHINFO_EXTENSION)) : '';
+            $cIsImg   = in_array($cExt, ['jpg','jpeg','png','webp','gif']);
+
+            $cPArr = is_string($coor->photos) ? json_decode($coor->photos, true) : ($coor->photos ?? []);
+            $cCover = null;
+            if (!empty($cPArr)) {
+                $cp = str_replace('\\', '/', trim($cPArr[0]));
+                $cp = ltrim($cp, '/');
+                $cp = preg_replace('#^(public/|storage/)#', '', $cp);
+                $cCover = asset('storage/' . $cp);
+            }
+            // Prioridad: foto > documento imagen > iframe pdf > gradiente
+        @endphp
+        <div x-show="{{ $loop->index }} < limitCoordinaciones"
+             @click="openViewer(window.portalCoordinaciones[{{ $loop->index }}])"
+             class="relative rounded-2xl overflow-hidden group cursor-pointer shadow-xl hover:-translate-y-1.5 transition-all duration-300"
+             style="height: 260px;">
+
+            {{-- FONDO --}}
+            @if($cCover)
+                <img src="{{ $cCover }}"
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     loading="lazy" alt="">
+            @elseif($cDocUrl && $cIsImg)
+                <img src="{{ $cDocUrl }}"
+                     class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                     loading="lazy" alt="">
+            @elseif($cDocUrl && !$cIsImg)
+                <div class="absolute inset-0 bg-slate-900 overflow-hidden pointer-events-none">
+                    <iframe src="{{ $cDocUrl }}#toolbar=0&navpanes=0&scrollbar=0&view=Fit"
+                            class="w-full h-full border-none scale-110 origin-top"
+                            loading="lazy"></iframe>
+                </div>
+            @else
+                <div class="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950"></div>
+                <div class="absolute inset-0 flex items-center justify-center opacity-10">
+                    <i class="fa-solid fa-handshake text-indigo-300 text-6xl"></i>
+                </div>
+            @endif
+
+            {{-- GRADIENTE ENCIMA --}}
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/55 to-indigo-950/20"></div>
+
+            {{-- BADGE SUPERIOR IZQUIERDO --}}
+            <div class="absolute top-3 left-3 z-10">
+                <span class="text-[9px] font-mono font-black text-white bg-indigo-600/90 backdrop-blur-sm border border-indigo-400/30 px-2.5 py-1 rounded-lg uppercase tracking-widest shadow-lg">
+                    Acta de Mesa
+                </span>
+            </div>
+
+            {{-- BADGE FOTOS SUPERIOR DERECHO --}}
+            @if(!empty($cPArr))
+            <div class="absolute top-3 right-3 z-10">
+                <span class="text-[9px] font-bold text-white bg-black/50 backdrop-blur-sm border border-white/10 px-2 py-1 rounded-lg flex items-center gap-1 shadow">
+                    <i class="fa-solid fa-images text-[8px]"></i> {{ count($cPArr) }}
+                </span>
             </div>
             @endif
-        </div>
-        @endif
 
-        {{-- ════════════════ SECCIÓN C: COORDINACIONES ════════════════ --}}
-        @if(isset($coordinacionesHechas) && $coordinacionesHechas->count() > 0)
-        <div id="seccion-coordinaciones" class="space-y-6">
-            <div class="flex items-center gap-3 bg-slate-950/50 border border-white/05 p-4 rounded-2xl shadow-xl">
-                <h3 class="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-handshake text-indigo-400"></i> Coordinaciones e Informes Interinstitucionales
-                </h3>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                @foreach($coordinacionesHechas as $coor)
-                <div x-show="{{ $loop->index }} < limitCoordinaciones" 
-                     @click="openViewer(window.portalCoordinaciones[{{ $loop->index }}])"
-                     class="bg-slate-950/60 p-5 border border-white/10 rounded-2xl flex flex-col justify-between min-h-[11rem] cursor-pointer hover:border-indigo-500/40 transition-all duration-300 group hover:-translate-y-0.5 shadow-lg">
-                    <div>
-                        <div class="flex items-center justify-between mb-2 text-[10px] font-mono font-black text-indigo-400 uppercase tracking-wider">
-                            <span>Acta de Mesa</span><span>{{ $coor->scheduled_at->format('d/m/Y') }}</span>
-                        </div>
-                        <h4 class="text-white font-bold text-sm line-clamp-2 leading-tight border-l-2 border-indigo-500 pl-2 uppercase group-hover:text-indigo-400 transition-colors">{{ $coor->title }}</h4>
-                        <p class="text-slate-400 text-xs font-medium line-clamp-3 mt-2 leading-relaxed">{{ $coor->description }}</p>
-                    </div>
+            {{-- CONTENIDO INFERIOR --}}
+            <div class="absolute bottom-0 left-0 right-0 z-10 p-4 space-y-2">
+                <p class="text-slate-400 text-[10px] font-bold font-mono">
+                    <i class="fa-regular fa-calendar mr-1 text-indigo-400"></i>
+                    {{ $coor->scheduled_at->format('d/m/Y') }}
+                </p>
+                <h4 class="text-white font-black text-sm uppercase leading-snug line-clamp-2 group-hover:text-indigo-300 transition-colors drop-shadow-lg border-l-2 border-indigo-500 pl-2">
+                    {{ $coor->title }}
+                </h4>
+                <p class="text-slate-400 text-[10px] font-medium line-clamp-1 leading-relaxed">
+                    {{ Str::limit($coor->description, 60) }}
+                </p>
+
+                <div class="flex items-center justify-between pt-1 border-t border-white/10">
+                    <span class="text-[10px] text-slate-300 font-medium flex items-center gap-1.5">
+                        <i class="fa-solid fa-file-contract text-indigo-400 text-[9px]"></i>
+                        Revisar acuerdos
+                    </span>
+                    <span class="text-[10px] text-indigo-400 font-black flex items-center gap-1 group-hover:gap-2 transition-all">
+                        Ver detalle <i class="fa-solid fa-arrow-right text-[8px]"></i>
+                    </span>
                 </div>
-                @endforeach
             </div>
 
-            @if($coordinacionesHechas->count() > 3)
-            <div class="text-center pt-2" x-show="limitCoordinaciones < {{ $coordinacionesHechas->count() }}">
-                <button type="button" @click="limitCoordinaciones += 5" class="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 border border-white/10 hover:border-indigo-500/50 text-slate-400 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md">
-                    <i class="fa-solid fa-plus text-indigo-500"></i> Ver 5 actas más
-                </button>
-            </div>
-            @endif
         </div>
-        @endif
+        @endforeach
+    </div>
+
+    @if($coordinacionesHechas->count() > 3)
+    <div class="text-center pt-2" x-show="limitCoordinaciones < {{ $coordinacionesHechas->count() }}">
+        <button type="button" @click="limitCoordinaciones += 5" class="inline-flex items-center gap-2 px-6 py-2.5 bg-slate-950 border border-white/10 hover:border-indigo-500/50 text-slate-400 hover:text-white text-xs font-black uppercase tracking-wider rounded-xl transition-all shadow-md">
+            <i class="fa-solid fa-plus text-indigo-500"></i> Ver 5 actas más
+        </button>
+    </div>
+    @endif
+</div>
+@endif
+
+
 
     </div>
 
-    {{-- ════════════════ VISUALIZADOR MAESTRO INMUNE A DESPLAZAMIENTOS MALOS ════════════════ --}}
-    <div class="fixed inset-0 w-screen h-screen z-[9995] flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md"
+    {{-- ════════════════ INTERFAZ DE VISUALIZACIÓN MAESTRA COMPLETA (FIXED INSET) ════════════════ --}}
+    <div class="fixed inset-0 w-full h-full z-[9999] flex items-center justify-center p-2 sm:p-4 bg-slate-950/85 backdrop-blur-md"
          x-show="viewModal" x-cloak x-transition>
         
-        <div class="relative bg-white rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col overflow-hidden border border-slate-100 h-[82vh]"
+        <div class="relative bg-white rounded-2xl w-full max-w-5xl shadow-2xl flex flex-col overflow-hidden border border-slate-200 h-[86vh] sm:h-[78vh]"
              @click.away="closeViewer()">
             
             <template x-if="selectedWorkshop">
                 <div class="w-full h-full flex flex-col justify-between">
                     
-                    <div class="bg-slate-950 px-6 py-3.5 border-b border-white/5 flex items-center justify-between shrink-0 z-10">
+                    <div class="bg-slate-950 px-5 py-3.5 border-b border-white/5 flex items-center justify-between shrink-0">
                         <span class="text-[9px] font-mono font-black text-red-500 uppercase tracking-widest flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse"></span>
-                            Visualizador Institucional DRTPE
+                            Visualizador de Evidencias DRTPE Puno
                         </span>
                         <button @click="closeViewer()" class="text-slate-400 hover:text-white transition text-xs font-black uppercase tracking-wider flex items-center gap-1 bg-transparent border-none cursor-pointer">
                             Cerrar <i class="fa-solid fa-xmark text-sm text-red-500"></i>
                         </button>
                     </div>
 
-                    <div class="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden">
+                    <div class="flex-1 flex flex-col md:flex-row items-stretch overflow-hidden bg-slate-950">
                         
-                        {{-- 🔲 PANEL IZQUIERDO (62%): ÁREA MULTIMEDIA DE ALTO IMPACTO --}}
-                        <div class="w-full md:w-[62%] bg-slate-950 flex items-center justify-center relative overflow-hidden h-1/2 md:h-full">
+                        {{-- 🔲 PANEL IZQUIERDO: VISUALIZADOR PRINCIPAL DINÁMICO INVERTIDO --}}
+                        <div class="w-full md:w-[62%] bg-slate-950 flex items-center justify-center relative overflow-hidden h-1/2 md:h-full border-b md:border-b-0 md:border-r border-white/5">
                             
                             <template x-if="selectedWorkshop.isPast">
                                 <div class="w-full h-full flex flex-col justify-between p-4">
-                                    
                                     <div class="flex-1 relative flex items-center justify-center">
+                                        
                                         <template x-if="selectedWorkshop.photos.length === 0">
                                             <div class="w-full h-full flex items-center justify-center">
                                                 <template x-if="selectedWorkshop.document && isImage(selectedWorkshop.document)">
@@ -1027,13 +1228,13 @@
                                             <div class="w-full h-full flex items-center justify-center relative">
                                                 <button x-show="selectedWorkshop.photos.length > 1"
                                                         @click="galleryIndex = (galleryIndex - 1 + selectedWorkshop.photos.length) % selectedWorkshop.photos.length"
-                                                        class="absolute left-2 w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border-none cursor-pointer z-10"><i class="fa-solid fa-chevron-left text-xs"></i></button>
+                                                        class="absolute left-2 w-9 h-9 rounded-xl bg-black/40 hover:bg-black/60 text-white flex items-center justify-center border-none cursor-pointer z-10"><i class="fa-solid fa-chevron-left text-xs"></i></button>
                                                 
                                                 <img :src="selectedWorkshop.photos[galleryIndex]" class="max-w-full max-h-[50vh] object-contain shadow-2xl rounded-xl border border-white/5">
                                                 
                                                 <button x-show="selectedWorkshop.photos.length > 1"
                                                         @click="galleryIndex = (galleryIndex + 1) % selectedWorkshop.photos.length"
-                                                        class="absolute right-2 w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center border-none cursor-pointer z-10"><i class="fa-solid fa-chevron-right text-xs"></i></button>
+                                                        class="absolute right-2 w-9 h-9 rounded-xl bg-black/40 hover:bg-black/60 text-white flex items-center justify-center border-none cursor-pointer z-10"><i class="fa-solid fa-chevron-right text-xs"></i></button>
                                             </div>
                                         </template>
                                     </div>
@@ -1053,30 +1254,41 @@
                             </template>
 
                             <template x-if="!selectedWorkshop.isPast">
-                                <div class="w-full h-full flex items-center justify-center">
-                                    <template x-if="selectedWorkshop.document && isImage(selectedWorkshop.document)">
-                                        <div class="w-full h-full p-4 flex items-center justify-center">
-                                            <img :src="selectedWorkshop.document" class="w-full h-full object-contain shadow-2xl rounded-lg">
-                                        </div>
-                                    </template>
-                                    <template x-if="selectedWorkshop.document && !isImage(selectedWorkshop.document)">
-                                        <div class="w-full h-full bg-slate-900">
-                                            <iframe :key="selectedWorkshop.title" :src="selectedWorkshop.document + '#toolbar=0&navpanes=0&view=Fit'" class="w-full h-full border-none" allow="autoplay"></iframe>
-                                        </div>
-                                    </template>
-                                    <template x-if="!selectedWorkshop.document">
-                                        <div class="p-8 text-center text-slate-500 font-medium space-y-2">
-                                            <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto text-slate-400"><i class="fa-solid fa-file-circle-xmark text-lg"></i></div>
-                                            <p class="text-xs font-mono font-black uppercase tracking-wider">Afiche informativo no cargado</p>
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
+    <div class="w-full h-full flex items-center justify-center">
+        
+        <template x-if="selectedWorkshop.document">
+            <div class="w-full h-full flex items-center justify-center">
+                <template x-if="isImage(selectedWorkshop.document)">
+                    <div class="w-full h-full p-4 flex items-center justify-center">
+                        <img :src="selectedWorkshop.document" class="w-full h-full object-contain shadow-2xl rounded-lg">
+                    </div>
+                </template>
+                <template x-if="!isImage(selectedWorkshop.document)">
+                    <iframe :key="selectedWorkshop.title" :src="selectedWorkshop.document + '#toolbar=0&navpanes=0&view=Fit'" class="w-full h-full border-none bg-white" allow="autoplay"></iframe>
+                </template>
+            </div>
+        </template>
+        
+        {{-- FALLBACK: si no hay document pero sí hay fotos, mostrar la primera foto --}}
+        <template x-if="!selectedWorkshop.document && selectedWorkshop.photos && selectedWorkshop.photos.length > 0">
+            <div class="w-full h-full p-4 flex items-center justify-center">
+                <img :src="selectedWorkshop.photos[0]" class="w-full h-full object-contain shadow-2xl rounded-lg">
+            </div>
+        </template>
+        
+        <template x-if="!selectedWorkshop.document && (!selectedWorkshop.photos || selectedWorkshop.photos.length === 0)">
+            <div class="p-8 text-center text-slate-500 font-medium space-y-2">
+                <div class="w-12 h-12 bg-white/5 border border-white/10 rounded-full flex items-center justify-center mx-auto text-slate-400"><i class="fa-solid fa-file-circle-xmark text-lg"></i></div>
+                <p class="text-xs font-mono font-black uppercase tracking-wider">Afiche promocional no cargado</p>
+            </div>
+        </template>
+    </div>
+</template>
+
                         </div>
 
-                        {{-- 📑 PANEL DERECHO (38%): SIDEBAR DETALLADO --}}
+                        {{-- 📑 PANEL DERECHO (38%): COLUMNA INFORMATIVA CLARA INSTITUTIONAL --}}
                         <div class="w-full md:w-[38%] bg-white flex flex-col justify-between p-5 sm:p-6 overflow-y-auto h-1/2 md:h-full text-slate-800">
-                            
                             <div class="space-y-4">
                                 <div class="space-y-2">
                                     <span class="bg-slate-100 text-slate-600 border border-slate-200/60 font-mono text-[9px] font-black uppercase px-2 py-0.5 rounded" x-text="selectedWorkshop.date"></span>
@@ -1095,13 +1307,13 @@
                                     </template>
                                     <template x-if="!isImage(selectedWorkshop.document)">
                                         <a :href="selectedWorkshop.document" target="_blank" class="inline-flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 hover:text-red-600 hover:border-red-200 transition">
-                                            <i class="fa-solid fa-file-pdf text-red-500"></i> Ver PDF de Convocatoria original
+                                            <i class="fa-solid fa-file-pdf text-red-500"></i> Ver Convocatoria Base
                                         </a>
                                     </template>
                                 </div>
 
                                 <div x-show="!selectedWorkshop.isPast && selectedWorkshop.requirements" class="pt-2">
-                                    <a :href="selectedWorkshop.requirements" target="_blank" class="w-full bg-slate-900 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-wider py-2.5 rounded-xl flex items-center justify-center gap-2 transition shadow shadow-slate-900/10">
+                                    <a :href="selectedWorkshop.requirements" target="_blank" class="w-full bg-slate-900 hover:bg-red-600 text-white text-[10px] font-black uppercase tracking-wider py-2.5 rounded-xl flex items-center justify-center gap-2 transition shadow">
                                         <i class="fa-solid fa-file-pdf"></i> Descargar Bases de Inscripción
                                     </a>
                                 </div>
@@ -1123,10 +1335,6 @@
 
 </div>
 @endif
-
-
-
-
 
 
 
