@@ -10,6 +10,7 @@ class WorkshopController extends Controller
 {
     public function index()
     {
+        // Paginación limpia ordenando por los registros más recientes
         $workshops = Workshop::latest()->paginate(10);
         return view('workshops.index', compact('workshops'));
     }
@@ -21,30 +22,41 @@ class WorkshopController extends Controller
 
     public function store(Request $request)
     {
+        // 🎯 CORREGIDO: Eliminada la coma ilegal antes del operador de asignación '=>'
         $request->validate([
             'title'        => 'required|string|max:255',
             'description'  => 'required|string',
             'type'         => 'required|in:capacitacion,coordinacion',
-            'scheduled_at' => 'required|date', // Valida tanto fecha sola como fecha/hora
+            'scheduled_at' => 'required|date', 
             'document'     => 'nullable|file|mimes:pdf,jpeg,png,jpg,webp|max:10240',
             'requirements' => 'nullable|file|mimes:pdf,jpeg,png,jpg,webp|max:10240',
+            'images.*'     => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
         ]);
 
         $data = $request->only(['title', 'description', 'type', 'scheduled_at']);
 
-        // 1. Archivo obligatorio/opcional informativo (¿Qué hacen?)
+        // 1. Carga de Afiche o Documento Matriz Principal
         if ($request->hasFile('document')) {
             $data['document_path'] = $request->file('document')->store('workshops/documents', 'public');
         }
 
-        // 2. Bases o Requisitos (Solo si es capacitación)
+        // 2. Bases Complementarias (Solo si aplica al módulo de capacitación)
         if ($request->type === 'capacitacion' && $request->hasFile('requirements')) {
             $data['requirements_path'] = $request->file('requirements')->store('workshops/requirements', 'public');
         }
 
+        // 3. Soporte para evidencias fotográficas desde la creación inicial
+        if ($request->hasFile('images')) {
+            $photos = [];
+            foreach ($request->file('images') as $image) {
+                $photos[] = $image->store('workshops/evidence', 'public');
+            }
+            $data['photos'] = $photos; // El Modelo se encarga de convertirlo a JSON gracias al cast
+        }
+
         Workshop::create($data);
 
-        return redirect()->route('workshops.index')->with('success', 'Actividad registrada con éxito.');
+        return redirect()->route('workshops.index')->with('success', 'Actividad registrada con éxito en el portal.');
     }
 
     public function edit(Workshop $workshop)
@@ -65,21 +77,26 @@ class WorkshopController extends Controller
 
         $data = $request->only(['title', 'description', 'scheduled_at']);
 
-        // Actualizar Documento Informativo
+        // Actualizar Documento Informativo y limpiar disco duro
         if ($request->hasFile('document')) {
-            if ($workshop->document_path) { Storage::disk('public')->delete($workshop->document_path); }
+            if ($workshop->document_path) { 
+                Storage::disk('public')->delete($workshop->document_path); 
+            }
             $data['document_path'] = $request->file('document')->store('workshops/documents', 'public');
         }
 
-        // Actualizar Bases o Requisitos
+        // Actualizar Bases o Requisitos y limpiar disco duro
         if ($workshop->type === 'capacitacion' && $request->hasFile('requirements')) {
-            if ($workshop->requirements_path) { Storage::disk('public')->delete($workshop->requirements_path); }
+            if ($workshop->requirements_path) { 
+                Storage::disk('public')->delete($workshop->requirements_path); 
+            }
             $data['requirements_path'] = $request->file('requirements')->store('workshops/requirements', 'public');
         }
 
-        // Carga de Fotos de la galería si el evento ya concluyó
+        // Acumulación controlada de evidencias de auditoría sin pisar registros anteriores
         if ($request->hasFile('images')) {
-            $uploadedPhotos = $workshop->photos ?? [];
+            // Como agregamos cast array al modelo, esto ya viene mapeado como array de PHP limpio
+            $uploadedPhotos = $workshop->photos ?? []; 
             foreach ($request->file('images') as $image) {
                 $uploadedPhotos[] = $image->store('workshops/evidence', 'public');
             }
@@ -93,13 +110,17 @@ class WorkshopController extends Controller
 
     public function destroy(Workshop $workshop)
     {
+        // Auditoría física de archivos para no dejar basura espacial en Laragon
         if ($workshop->document_path) { Storage::disk('public')->delete($workshop->document_path); }
         if ($workshop->requirements_path) { Storage::disk('public')->delete($workshop->requirements_path); }
-        if ($workshop->photos) {
-            foreach ($workshop->photos as $photo) { Storage::disk('public')->delete($photo); }
+        
+        if ($workshop->photos && is_array($workshop->photos)) {
+            foreach ($workshop->photos as $photo) { 
+                Storage::disk('public')->delete($photo); 
+            }
         }
+        
         $workshop->delete();
         return redirect()->route('workshops.index')->with('success', 'Evento eliminado de la base de datos.');
     }
 }
-

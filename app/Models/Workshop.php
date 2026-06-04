@@ -9,10 +9,20 @@ class Workshop extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'description', 'type', 'scheduled_at', 'photos'];
+    // 🎯 REPARADO: Se añaden document_path y requirements_path para permitir su guardado
+    protected $fillable = [
+        'title', 
+        'description', 
+        'type', 
+        'scheduled_at', 
+        'document_path', 
+        'requirements_path', 
+        'photos'
+    ];
 
     protected $casts = [
         'scheduled_at' => 'datetime',
-        'photos'       => 'array', // Parsea el JSON a array nativo de PHP
+        'photos'       => 'array', // Parsea automáticamente el JSON a array nativo de PHP
     ];
 }
+
